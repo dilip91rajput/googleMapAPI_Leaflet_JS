@@ -139,22 +139,67 @@
             });
         }
 
-        // Update the event listener to calculate distance and time
-        startSelect.addEventListener('change', function() {
-            var selectedIndex = startSelect.value;
-            var selectedLocation = locationOptions[selectedIndex];
-            startMarker.setLatLng(selectedLocation.latlng);
-            updateLineGraph();
-            calculateAndDisplayDistanceTime();
-        });
+    // ... (previous code)
 
-        destinationSelect.addEventListener('change', function() {
-            var selectedIndex = destinationSelect.value;
-            var selectedLocation = locationOptions[selectedIndex];
-            destinationMarker.setLatLng(selectedLocation.latlng);
-            updateLineGraph();
-            calculateAndDisplayDistanceTime();
-        });
+// Function to update the dropdown options based on selections
+function updateDropdownOptions() {
+    var selectedStartLatLng = startSelect.value.split(',');
+    var selectedDestinationLatLng = destinationSelect.value.split(',');
+
+    // Clear existing options
+    startSelect.innerHTML = '';
+    destinationSelect.innerHTML = '';
+
+    // Add back the options excluding the selected values
+    locationOptions.forEach(function (location) {
+        var latlngString = location.latlng.join(','); // Convert latlng array to string
+        if (latlngString !== selectedDestinationLatLng.join(',')) {
+            var startOption = new Option(location.name, latlngString);
+            startSelect.appendChild(startOption);
+        }
+        if (latlngString !== selectedStartLatLng.join(',')) {
+            var destinationOption = new Option(location.name, latlngString);
+            destinationSelect.appendChild(destinationOption);
+        }
+    });
+
+    // Set the selected values back to the previous selections
+    startSelect.value = selectedStartLatLng.join(',');
+    destinationSelect.value = selectedDestinationLatLng.join(',');
+}
+
+
+// Add event listeners to the dropdowns to update options
+startSelect.addEventListener('change', function () {
+    updateDropdownOptions();
+    var selectedLatLng = startSelect.value.split(',').map(Number);
+    startMarker.setLatLng(selectedLatLng);
+    updateLineGraph();
+    calculateAndDisplayDistanceTime();
+});
+
+destinationSelect.addEventListener('change', function () {
+    updateDropdownOptions();
+    var selectedLatLng = destinationSelect.value.split(',').map(Number);
+    destinationMarker.setLatLng(selectedLatLng);
+    updateLineGraph();
+    calculateAndDisplayDistanceTime();
+});
+
+// Initialize the dropdown options
+updateDropdownOptions();
+
+// Set the default start and destination locations using latitude and longitude strings
+var defaultStartLatLng = locationOptions[0].latlng.join(',');
+var defaultDestinationLatLng = locationOptions[1].latlng.join(',');
+startSelect.value = defaultStartLatLng;
+destinationSelect.value = defaultDestinationLatLng;
+
+// Manually trigger change events for default selections
+startSelect.dispatchEvent(new Event('change'));
+destinationSelect.dispatchEvent(new Event('change'));
+
+
 
         // Calculate distance and time and update the info div
         function calculateAndDisplayDistanceTime() {

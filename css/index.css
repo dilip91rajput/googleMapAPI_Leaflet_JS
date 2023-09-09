@@ -31,3 +31,13 @@ form#destination-form select {
 #distance-time-info p {
     font-size: 18px;
 }
+#reset-button {
+    margin-top: 10px;
+    background-color: blue;
+    color: #fff;
+    border-radius: 4px;
+    padding: 10px;
+    border: 1px solid #fff;
+    width: 100px;
+    cursor: pointer;
+}

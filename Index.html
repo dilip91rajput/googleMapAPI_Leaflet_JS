@@ -24,16 +24,20 @@
                 </select>
             </label>
             <!-- <button type="submit">Add Destination</button> -->
+            <button id="reset-button">Reset</button>
         </form>
 
         <!-- List of added destinations -->
         <ul id="destination-list">
             <!-- List items will be added dynamically -->
         </ul>
-         <!-- Add a div for displaying distance and time -->
+        <!-- Add a div for displaying full addresses -->
+        <div id="full-address-info">
+            <p><b>Start Location Address:</b> <span id="startLocationAddress"></span></p>
+            <p><b>Destination Location Address:</b> <span id="destinationLocationAddress"></span></p>
+        </div>
+        <!-- Add a div for displaying distance and time -->
         <div id="distance-time-info">
-            <p><b>Start Location :</b> <span id="startLocation"></span></p>
-            <p><b>Destination Location :</b> <span id="destinationLocation"></span></p>
             <p><b>Distance:</b> <span id="distance"></span></p>
             <p><b>Time: </b><span id="time"></span></p>
         </div>
@@ -71,18 +75,18 @@
         // Call the function to calculate and display default distance and time
         calculateAndDisplayDistanceTime()
 
-        // Function to perform reverse geocoding and set the location name in the input field
-        function setDefaultLocationName(marker, defaultName) {
-            var latLng = marker.getLatLng();
-            reverseGeocode(latLng, function(locationName) {
-                // Update the input field with the location name
-                defaultName.innerHTML = locationName;
-            });
-        }
+        // // Function to perform reverse geocoding and set the location name in the input field
+        // function setDefaultLocationName(marker, defaultName) {
+        //     var latLng = marker.getLatLng();
+        //     reverseGeocode(latLng, function(locationName) {
+        //         // Update the input field with the location name
+        //         defaultName.innerHTML = locationName;
+        //     });
+        // }
 
-        // Set default location names for start and destination
-        setDefaultLocationName(startMarker, document.querySelector('#startLocation'));
-        setDefaultLocationName(destinationMarker, document.querySelector('#destinationLocation'));
+        // // Set default location names for start and destination
+        // setDefaultLocationName(startMarker, document.querySelector('#startLocation'));
+        // setDefaultLocationName(destinationMarker, document.querySelector('#destinationLocation'));
 
         // Populate the dropdowns with location options
         var startSelect = document.getElementById('start-select');
@@ -98,19 +102,18 @@
         // Initialize the line graph
         var line = L.polyline([startMarker.getLatLng(), destinationMarker.getLatLng()], { color: 'red', weight: 3 }).addTo(map);
 
-        // Update the event listener to calculate distance and time
+        // Update the event listener to calculate distance and time and update the full addresses
         startMarker.on('dragend', function(event) {
             var latLng = startMarker.getLatLng();
             reverseGeocode(latLng, function(locationName) {
                 console.log(`Start Marker Dragged to Location: ${locationName}`);
                 updateLineGraph();
-
-                // Update the input field with the new location name
-                document.querySelector('#startLocation').innerHTML = locationName;
                 // Update the list of destinations
                 updateDestinationList();
                 // Calculate distance and time and update the info div
                 calculateAndDisplayDistanceTime();
+                // Update the full addresses
+                updateFullAddresses();
             });
         });
 
@@ -119,13 +122,12 @@
             reverseGeocode(latLng, function(locationName) {
                 console.log(`Destination Marker Dragged to Location: ${locationName}`);
                 updateLineGraph();
-
-                // Update the input field with the new location name
-                document.querySelector('#destinationLocation').innerHTML = locationName;
                 // Update the list of destinations
                 updateDestinationList();
                 // Calculate distance and time and update the info div
                 calculateAndDisplayDistanceTime();
+                // Update the full addresses
+                updateFullAddresses();
             });
         });
 
@@ -139,22 +141,83 @@
             });
         }
 
-        // Update the event listener to calculate distance and time
-        startSelect.addEventListener('change', function() {
-            var selectedIndex = startSelect.value;
-            var selectedLocation = locationOptions[selectedIndex];
-            startMarker.setLatLng(selectedLocation.latlng);
+        // Function to update the full addresses based on coordinates
+        function updateFullAddresses() {
+            reverseGeocode(startMarker.getLatLng(), function(startAddress) {
+                document.querySelector('#startLocationAddress').textContent = startAddress;
+            });
+
+            reverseGeocode(destinationMarker.getLatLng(), function(destinationAddress) {
+                document.querySelector('#destinationLocationAddress').textContent = destinationAddress;
+            });
+        }
+
+        // Call the function to update full addresses initially
+        updateFullAddresses();
+
+        // Function to update the dropdown options based on selections
+        function updateDropdownOptions() {
+        var selectedStartLatLng = startSelect.value.split(',');
+        var selectedDestinationLatLng = destinationSelect.value.split(',');
+
+        // Clear existing options
+        startSelect.innerHTML = '';
+        destinationSelect.innerHTML = '';
+
+        // Add back the options excluding the selected values
+        locationOptions.forEach(function (location) {
+        var latlngString = location.latlng.join(','); // Convert latlng array to string
+        if (latlngString !== selectedDestinationLatLng.join(',')) {
+            var startOption = new Option(location.name, latlngString);
+            startSelect.appendChild(startOption);
+        }
+        if (latlngString !== selectedStartLatLng.join(',')) {
+            var destinationOption = new Option(location.name, latlngString);
+            destinationSelect.appendChild(destinationOption);
+        }
+    });
+
+    // Set the selected values back to the previous selections
+    startSelect.value = selectedStartLatLng.join(',');
+    destinationSelect.value = selectedDestinationLatLng.join(',');
+}
+
+
+        // Add event listeners to the dropdowns to update options
+        startSelect.addEventListener('change', function () {
+            updateDropdownOptions();
+            var selectedLatLng = startSelect.value.split(',').map(Number);
+            startMarker.setLatLng(selectedLatLng);
             updateLineGraph();
             calculateAndDisplayDistanceTime();
+            // Update the full addresses
+            updateFullAddresses();
         });
 
-        destinationSelect.addEventListener('change', function() {
-            var selectedIndex = destinationSelect.value;
-            var selectedLocation = locationOptions[selectedIndex];
-            destinationMarker.setLatLng(selectedLocation.latlng);
+        destinationSelect.addEventListener('change', function () {
+            updateDropdownOptions();
+            var selectedLatLng = destinationSelect.value.split(',').map(Number);
+            destinationMarker.setLatLng(selectedLatLng);
             updateLineGraph();
             calculateAndDisplayDistanceTime();
+            // Update the full addresses
+            updateFullAddresses();
         });
+
+        // Initialize the dropdown options
+        updateDropdownOptions();
+
+        // Set the default start and destination locations using latitude and longitude strings
+        var defaultStartLatLng = locationOptions[0].latlng.join(',');
+        var defaultDestinationLatLng = locationOptions[1].latlng.join(',');
+        startSelect.value = defaultStartLatLng;
+        destinationSelect.value = defaultDestinationLatLng;
+
+        // Manually trigger change events for default selections
+        startSelect.dispatchEvent(new Event('change'));
+        destinationSelect.dispatchEvent(new Event('change'));
+
+
 
         // Calculate distance and time and update the info div
         function calculateAndDisplayDistanceTime() {
@@ -222,6 +285,36 @@
             return time;
         }
         
+        // Function to reset the map to the initial state
+function resetMapToInitialState() {
+    // Reset the dropdowns to their default values
+    startSelect.value = defaultStartLatLng;
+    destinationSelect.value = defaultDestinationLatLng;
+
+    // Trigger change events for the default selections
+    startSelect.dispatchEvent(new Event('change'));
+    destinationSelect.dispatchEvent(new Event('change'));
+
+    // Reset the markers to their default positions
+    startMarker.setLatLng(locationOptions[0].latlng);
+    destinationMarker.setLatLng(locationOptions[1].latlng);
+
+    // Update the full addresses
+    updateFullAddresses();
+
+    // Clear the destination list
+    document.querySelector('#destination-list').innerHTML = '';
+
+    // Calculate and display the initial distance and time
+    calculateAndDisplayDistanceTime();
+    // Update the line graph
+    updateLineGraph();
+}
+
+// Add an event listener for the reset button
+document.getElementById('reset-button').addEventListener('click', function () {
+    resetMapToInitialState();
+});
     </script>
 </body>
 </html>
