@@ -32,8 +32,10 @@
         </ul>
          <!-- Add a div for displaying distance and time -->
         <div id="distance-time-info">
-            <p>Distance: <span id="distance"></span></p>
-            <p>Time: <span id="time"></span></p>
+            <p><b>Start Location :</b> <span id="startLocation"></span></p>
+            <p><b>Destination Location :</b> <span id="destinationLocation"></span></p>
+            <p><b>Distance:</b> <span id="distance"></span></p>
+            <p><b>Time: </b><span id="time"></span></p>
         </div>
     </div>
     <div id="map"></div>
@@ -69,6 +71,19 @@
         // Call the function to calculate and display default distance and time
         calculateAndDisplayDistanceTime()
 
+        // Function to perform reverse geocoding and set the location name in the input field
+        function setDefaultLocationName(marker, defaultName) {
+            var latLng = marker.getLatLng();
+            reverseGeocode(latLng, function(locationName) {
+                // Update the input field with the location name
+                defaultName.innerHTML = locationName;
+            });
+        }
+
+        // Set default location names for start and destination
+        setDefaultLocationName(startMarker, document.querySelector('#startLocation'));
+        setDefaultLocationName(destinationMarker, document.querySelector('#destinationLocation'));
+
         // Populate the dropdowns with location options
         var startSelect = document.getElementById('start-select');
         var destinationSelect = document.getElementById('destination-select');
@@ -91,7 +106,7 @@
                 updateLineGraph();
 
                 // Update the input field with the new location name
-                document.querySelector('input[name="start"]').value = locationName;
+                document.querySelector('#startLocation').innerHTML = locationName;
                 // Update the list of destinations
                 updateDestinationList();
                 // Calculate distance and time and update the info div
@@ -106,7 +121,7 @@
                 updateLineGraph();
 
                 // Update the input field with the new location name
-                document.querySelector('input[name="destination"]').value = locationName;
+                document.querySelector('#destinationLocation').innerHTML = locationName;
                 // Update the list of destinations
                 updateDestinationList();
                 // Calculate distance and time and update the info div
@@ -165,7 +180,7 @@
         function addLocationToList(latLng) {
             var ul = document.querySelector('#destination-list');
             var li = document.createElement('li');
-            li.textContent = `Location : ${latLng.lat}, Lng: ${latLng.lng}`;
+            li.textContent = `Lat : ${latLng.lat}, Lng: ${latLng.lng}`;
             ul.appendChild(li);
         }
 
